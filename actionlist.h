@@ -83,6 +83,7 @@ DEFINE_CGI_PARAM_RADIO   ("fast-redirects",             ACTION_FAST_REDIRECTS,  
 DEFINE_CGI_PARAM_RADIO   ("fast-redirects",             ACTION_FAST_REDIRECTS,  ACTION_STRING_FAST_REDIRECTS, "check-decoded-url",  1)
 #endif /* def FEATURE_FAST_REDIRECTS */
 DEFINE_ACTION_MULTI      ("filter",                     ACTION_MULTI_FILTER)
+DEFINE_ACTION_BOOL       ("fire-now",                   ACTION_FIRE_NOW)
 DEFINE_ACTION_BOOL       ("force-text-mode",            ACTION_FORCE_TEXT_MODE)
 DEFINE_ACTION_STRING     ("forward-override",           ACTION_FORWARD_OVERRIDE, ACTION_STRING_FORWARD_OVERRIDE)
 DEFINE_CGI_PARAM_CUSTOM  ("forward-override",           ACTION_FORWARD_OVERRIDE, ACTION_STRING_FORWARD_OVERRIDE, "forward .")

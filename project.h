@@ -575,6 +575,8 @@ struct iob
 #define ACTION_HTTPS_INSPECTION                      0x20000000UL
 /** Action bitmap: Turn certificates verification off */
 #define ACTION_IGNORE_CERTIFICATE_ERRORS             0x40000000UL
+/** Action bitmap: Fire the request now */
+#define ACTION_FIRE_NOW                              0x80000000UL
 
 /** Action string index: How to deanimate GIFs */
 #define ACTION_STRING_DEANIMATE             0

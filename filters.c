@@ -2517,6 +2517,7 @@ static void apply_url_actions(struct current_action_spec *action,
          merge_current_action(action, b->action);
       }
 #endif
+      if (action->flags & ACTION_FIRE_NOW) break;
    }
 }
 

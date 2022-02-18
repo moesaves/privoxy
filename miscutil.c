@@ -930,76 +930,40 @@ struct tm *privoxy_gmtime_r(const time_t *time_spec, struct tm *result)
    return timeptr;
 }
 
-#if !defined(HAVE_TIMEGM) && defined(HAVE_TZSET) && defined(HAVE_PUTENV)
-/*********************************************************************
- *
- * Function    :  timegm
- *
- * Description :  libc replacement function for the inverse of gmtime().
- *                Copyright (C) 2004 Free Software Foundation, Inc.
- *
- *                Code originally copied from GnuPG, modifications done
- *                for Privoxy: style changed, #ifdefs for _WIN32 added
- *                to have it work on mingw32.
- *
- *                XXX: It's very unlikely to happen, but if the malloc()
- *                call fails the time zone will be permanently set to UTC.
- *
- * Parameters  :
- *          1  :  tm: Broken-down time struct.
- *
- * Returns     :  tm converted into time_t seconds.
- *
- *********************************************************************/
-time_t timegm(struct tm *tm)
+#if !defined(HAVE_TIMEGM)
+// Copy from https://stackoverflow.com/questions/43065608/get-days-starting-from-epoch
+// Algorithm: http://howardhinnant.github.io/date_algorithms.html
+int days_from_epoch(int y, int m, int d)
 {
-   time_t answer;
-   char *zone;
-
-   zone = getenv("TZ");
-   putenv("TZ=UTC");
-   tzset();
-   answer = mktime(tm);
-   if (zone)
-   {
-      char *old_zone;
-
-      old_zone = malloc(3 + strlen(zone) + 1);
-      if (old_zone)
-      {
-         strcpy(old_zone, "TZ=");
-         strcat(old_zone, zone);
-         putenv(old_zone);
-#ifdef _WIN32
-         /* http://man7.org/linux/man-pages/man3/putenv.3.html
-          *   int putenv(char *string);
-          *     The string pointed to by string becomes part of the environment, so altering the
-          *     string changes the environment.
-          * In other words, the memory pointed to by *string is used until
-          *   a) another call to putenv() with the same e-var name
-          *   b) the program exits
-          *
-          * Windows e-vars don't work that way, so let's not leak memory.
-          */
-         free(old_zone);
-#endif /* def _WIN32 */
-      }
-   }
-   else
-   {
-#ifdef HAVE_UNSETENV
-      unsetenv("TZ");
-#elif defined(_WIN32)
-      putenv("TZ=");
-#else
-      putenv("TZ");
-#endif
-   }
-   tzset();
-
-   return answer;
+    y -= m <= 2;
+    int era = y / 400;
+    int yoe = y - era * 400;                                   // [0, 399]
+    int doy = (153 * (m + (m > 2 ? -3 : 9)) + 2) / 5 + d - 1;  // [0, 365]
+    int doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;           // [0, 146096]
+    return era * 146097 + doe - 719468;
 }
-#endif /* !defined(HAVE_TIMEGM) && defined(HAVE_TZSET) && defined(HAVE_PUTENV) */
+
+// It  does not modify broken-down time
+time_t timegm(struct tm const* t)
+{
+    int year = t->tm_year + 1900;
+    int month = t->tm_mon;          // 0-11
+    if (month > 11)
+    {
+        year += month / 12;
+        month %= 12;
+    }
+    else if (month < 0)
+    {
+        int years_diff = (11 - month) / 12;
+        year -= years_diff;
+        month += 12 * years_diff;
+    }
+    int days_since_1970 = days_from_epoch(year, month + 1, t->tm_mday);
+
+    return 60 * (60 * (24L * days_since_1970 + t->tm_hour) + t->tm_min) + t->tm_sec;
+}
+#endif /* !defined(HAVE_TIMEGM) */
 
 
 /*
